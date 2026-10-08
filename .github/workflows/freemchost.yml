@@ -16,7 +16,7 @@ jobs:
       NODE_LINK: ${{ secrets.NODE_LINK }}
 
     steps:
-           - name: 检出仓库代码
+      - name: 检出仓库代码
         uses: actions/checkout@v4
 
       - name: 检出私有核心仓库
@@ -48,29 +48,21 @@ jobs:
         if: ${{ env.NODE_LINK != '' }}
         run: |
           echo "🌐 识别到 NODE_LINK，初始化代理转换..."
-          
-          # 1. 节点硬编码临时 HTTP 托管
           echo "$NODE_LINK" > node.txt
           python3 -m http.server 8080 &
-          
-          # 2. 下载并启动 Subconverter
           wget -qO sub.tar.gz https://github.com/tindy2013/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -xf sub.tar.gz
           nohup ./subconverter/subconverter > sub.log 2>&1 &
           sleep 2
-          
-          # 3. 下载并解压 Mihomo 内核
           wget -qO mihomo.gz https://github.com/MetaCubeX/mihomo/releases/download/v1.18.2/mihomo-linux-amd64-v1.18.2.gz
           gunzip mihomo.gz
           chmod +x mihomo
           
-          # 4. 生成配置解析脚本
           cat << 'EOF' > parse_node.js
           const fs = require('fs');
           const http = require('http');
           const url = require('url');
           const yaml = require('js-yaml');
-
           const nodeLink = (process.env.NODE_LINK || '').trim();
 
           async function trySubconverter() {
@@ -163,28 +155,21 @@ jobs:
                 console.error('❌ 无法识别 NODE_LINK 格式');
                 process.exit(1);
               }
-              
               const configObj = {
                 'socks-port': 7891,
                 'allow-lan': true,
                 'mode': 'global',
                 'proxies': [ nodeObj ]
               };
-              
               fs.writeFileSync('config.yaml', yaml.dump(configObj));
             }
             console.log('✅ Mihomo 配置文件 config.yaml 就绪');
           })();
           EOF
-          
-          # 执行节点配置生成
+
           node parse_node.js
-          
-          # 启动后台 Mihomo
           nohup ./mihomo -d . -f config.yaml > mihomo.log 2>&1 &
           sleep 4
-          
-          # 连通性测试
           if nc -z 127.0.0.1 7891; then
             echo "🎉 代理内核启动完成，SOCKS5 端口: 127.0.0.1:7891"
           else
@@ -196,9 +181,9 @@ jobs:
 
       - name: 运行保活与自动续期任务
         env:
-          FREE_EMAIL: ${{ secrets.FREE_EMAIL || 'yuxiaojie0322@gmail.com' }}
-          FREE_PASSWORD: ${{ secrets.FREE_PASSWORD || 'YxJ223512@' }}
-          SERVER_PAGE_URL: ${{ secrets.SERVER_PAGE_URL || 'https://freemchost.com/app/servers/1df49f71-bb1b-454c-9cd1-70a46422a4f6' }}
+          FREE_EMAIL: ${{ secrets.FREE_EMAIL }}
+          FREE_PASSWORD: ${{ secrets.FREE_PASSWORD }}
+          SERVER_PAGE_URL: ${{ secrets.SERVER_PAGE_URL }}
           START_INTERVAL_HOURS: ${{ vars.START_INTERVAL_HOURS || '3' }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
