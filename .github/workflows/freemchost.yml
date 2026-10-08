@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   # schedule 定时已交由外部白虎面板精准触发，避免 GitHub 队列调度延迟
 
+concurrency:
+  group: freemchost-auto-renew-group
+  cancel-in-progress: false
+
 permissions:
   actions: write
   contents: write
@@ -199,7 +203,8 @@ jobs:
             git add last_start.json
             if ! git diff --staged --quiet; then
               git commit -m "chore: update last_start.json [skip ci]"
-              git push
+              git pull --rebase origin main || true
+              git push origin main
             fi
           fi
 
@@ -212,11 +217,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: 🧹 清理历史运行日志（保留最新 3 次）
+      - name: 🧹 清理历史运行日志（仅保留本次最新 1 条）
         if: always()
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          retain_days: 0      
-          keep_minimum_runs: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🧹 开始清理历史运行记录，仅保留本次运行 (Run ID: ${{ github.run_id }})..."
+          gh run list --repo "${{ github.repository }}" --limit 100 --json databaseId -q '.[].databaseId' | while read -r r_id; do
+            if [ -n "$r_id" ] && [ "$r_id" != "${{ github.run_id }}" ]; then
+              echo "🗑️ 正在删除旧记录: $r_id"
+              gh run delete "$r_id" --repo "${{ github.repository }}" || true
+            fi
+          done
+          echo "🎉 清理完成，当前仅保留最新 1 条记录！"
