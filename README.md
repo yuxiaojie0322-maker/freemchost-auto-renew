@@ -1,4 +1,4 @@
-﻿# FreeMCHost 自动保活与永久续期脚本
+# FreeMCHost 自动保活与永久续期
 
 > 专为 FreeMCHost 免费 Minecraft 服务器设计的自动化工具：
 > 1. **在线保活（Online Reset）**：自动识别控制台上方的 `Online XX:XX` 倒计时，每 35~40 分钟自动点击一次 **Reset**，维持服务器 7x24 小时在线不休眠。
@@ -7,36 +7,26 @@
 
 ---
 
-## 🎯 预置默认配置
+## 🔒 架构说明与安全保护
 
-脚本已直接配置你的账号信息作为默认兜底项：
-- **账号**：`xxxxx@gmail.com`
-- **密码**：`xxxxxx`
-- **目标服务器页面**：`https://freemchost.com/app/servers/1df49f71-bb1b-454c-9cd1-70a46422a4f6`
+本项目采用模块化安全管理架构：
+- **触发与工作流调度**：托管于当前公开仓库（仅保留 Actions 配置与执行日志），免去暴露核心代码与逻辑。
+- **核心自动化逻辑**：托管于私有仓库 `my-private-scripts/freemchost`。
+- **认证配置**：通过 GitHub Actions Secrets 安全注入，无需任何明文凭证。
 
 ---
 
-## 🚀 两种运行方式
+## 🚀 运行方式
 
-### 方案一：GitHub Actions 全自动托管（推荐，免挂机电脑）
+### GitHub Actions 全自动托管
 
-已在 `.github/workflows/freemchost.yml` 中配置好定时调度：
-- **触发频率**：每 35 分钟自动执行一次（`cron: '*/35 * * * *'`）。
-- **运行过程**：启动无头浏览器 ➔ 自动登录 ➔ 进入服务器控制台 ➔ 识别并点击 **Reset** ➔ 核对 60h 租期 ➔ 归档控制台截图。
-- **自定义 Secrets（可选）**：
-  若后续更换账号或服务器，在 GitHub 仓库的 `Settings` -> `Secrets and variables` -> `Actions` 中添加：
+已在 `.github/workflows/freemchost.yml` 中配置自动化执行支持：
+- **触发机制**：支持手动 `workflow_dispatch` 触发，或由外部白虎面板定时触发，防排队调度延迟。
+- **自定义 Secrets**：
+  若后续更换账号或服务器，在当前仓库 `Settings` -> `Secrets and variables` -> `Actions` 中配置：
   - `FREE_EMAIL`：登录邮箱
   - `FREE_PASSWORD`：登录密码
   - `SERVER_PAGE_URL`：服务器控制台链接
+  - `CORE_SCRIPT_TOKEN`：私有脚本库拉取访问 Token
   - `TG_BOT_TOKEN` / `TG_CHAT_ID`：Telegram 结果推送（可选）
-  - `NODE_LINK` / `PROXY_URL`：代理节点链接（可选，防止平台风控）
-
----
-
-### 方案二：本地电脑 / VPS 常驻挂机
-
-1. 双击运行 `启动_40分钟挂机保活.bat`：
-   - 首次运行会自动安装 Playwright 与 Chromium 浏览器内核。
-   - 启动后进入常驻守护模式，每隔 40 分钟自动登录并点击一次 Reset。
-2. 双击运行 `测试运行一次.bat`：
-   - 立即执行一次完整的登录、点击 Reset 与截图流程，并在当前目录 `screenshots/` 生成凭据图片。
+  - `NODE_LINK` / `PROXY_URL`：代理节点链接（可选）
