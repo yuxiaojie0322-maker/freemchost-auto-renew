@@ -16,8 +16,15 @@ jobs:
       NODE_LINK: ${{ secrets.NODE_LINK }}
 
     steps:
-      - name: 检出仓库代码
+           - name: 检出仓库代码
         uses: actions/checkout@v4
+
+      - name: 检出私有核心仓库
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/my-private-scripts
+          path: private-scripts
+          token: ${{ secrets.CORE_SCRIPT_TOKEN || secrets.REPO_TOKEN || secrets.GH_PAT_PRIVATE_REPO }}
 
       - name: 设置 Node.js 环境
         uses: actions/setup-node@v4
@@ -196,7 +203,7 @@ jobs:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           PROXY_URL: ${{ secrets.PROXY_URL || (env.NODE_LINK != '' && 'socks5://127.0.0.1:7891' || '') }}
-        run: node renew.js
+        run: node private-scripts/freemchost/renew.js
 
       - name: 💾 同步保存开机保活时间戳
         if: always()
