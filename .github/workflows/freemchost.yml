@@ -1,4 +1,4 @@
-﻿name: Freemchost Auto Renew & Keepalive
+name: Freemchost Auto Renew & Keepalive
 
 on:
   workflow_dispatch:
