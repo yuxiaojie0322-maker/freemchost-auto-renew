@@ -191,8 +191,13 @@ jobs:
           START_INTERVAL_HOURS: ${{ vars.START_INTERVAL_HOURS || '3' }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          PROXY_URL: ${{ secrets.PROXY_URL || (env.NODE_LINK != '' && 'socks5://127.0.0.1:7891' || '') }}
-        run: node private-scripts/freemchost/renew.js
+          PROXY_URL: ${{ secrets.PROXY_URL }}
+          NODE_LINK: ${{ secrets.NODE_LINK }}
+        run: |
+          if [ -n "$NODE_LINK" ] && [ -z "$PROXY_URL" ]; then
+            export PROXY_URL="socks5://127.0.0.1:7891"
+          fi
+          node private-scripts/freemchost/renew.js
 
       - name: 💾 同步保存开机保活时间戳
         if: always()
